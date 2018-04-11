@@ -1,6 +1,6 @@
-import ledger from 'ledgerco/src/index-browserify';
 import EthereumTx from 'ethereumjs-tx';
-import u2f from '../u2f-api';
+import AppEth from "@ledgerhq/hw-app-eth";
+import Transport from "@ledgerhq/hw-transport";
 import {timeout} from 'promise-timeout';
 if (window.u2f === undefined) window.u2f = u2f;
 
@@ -88,7 +88,8 @@ class LedgerWallet {
             throw new Error("You can only have one ledger connection active at a time");
         } else {
             this.connectionOpened = true;
-            return new ledger.eth(await ledger.comm_u2f.create_async());
+            const transport = await getTransport();
+            return new AppEth(transport);
         }
     }
 
@@ -149,7 +150,6 @@ class LedgerWallet {
 
         const address = await eth.getAddress_async(pth, false, false)
 	addresses[path] = address.address;
-        addressToPathMap[address.address.toLowerCase()] = path;
 	}
 	callback(null, addresses);
     }
