@@ -140,7 +140,6 @@ class LedgerWallet {
             callback(null, this._accounts);
             return;
         }
-        const chainCode = false; // Include the chain code
         let eth = await this._getLedgerConnection();
         let cleanupCallback = (error, data) => {
             this._closeLedgerConnection(eth);
@@ -148,11 +147,11 @@ class LedgerWallet {
         };
 	for (let pth in this._path) {
 
-        const address = await eth.getAddress_async(pth, askForOnDeviceConfirmation, chainCode)
+        const address = await eth.getAddress_async(pth, false, false)
 	addresses[path] = address.address;
         addressToPathMap[address.address.toLowerCase()] = path;
 	}
-	callback(addresses);
+	callback(null, addresses);
     }
 
     /**
