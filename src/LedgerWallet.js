@@ -42,9 +42,9 @@ const allowed_hd_paths = ["44'/60'", "44'/61'"];
 class LedgerWallet {
 
     constructor(path, web3instance) {
-        path = path || allowed_hd_paths[0];
-        if (!allowed_hd_paths.some(hd_pref => path.startsWith(hd_pref)))
-            throw new Error(`hd derivation path for Nano Ledger S may only start [${allowed_hd_paths}], ${path} was provided`);
+//        path = path || allowed_hd_paths[0];
+//        if (!allowed_hd_paths.some(hd_pref => path.startsWith(hd_pref)))
+//            throw new Error(`hd derivation path for Nano Ledger S may only start [${allowed_hd_paths}], ${path} was provided`);
         this._path = path;
         this._web3 = web3instance || web3;
         this._accounts = null;
@@ -130,7 +130,8 @@ class LedgerWallet {
      * @param {failableCallback} callback
      * @param askForOnDeviceConfirmation
      */
-    async getAccounts(callback, askForOnDeviceConfirmation = true) {
+    async getAccounts(callback, askForOnDeviceConfirmation = false) {
+	const addresses = {};
         if (!this.isU2FSupported) {
             callback(new Error(NOT_SUPPORTED_ERROR_MSG));
             return;
@@ -145,12 +146,13 @@ class LedgerWallet {
             this._closeLedgerConnection(eth);
             callback(error, data);
         };
-        eth.getAddress_async(this._path, askForOnDeviceConfirmation, chainCode)
-            .then(function (result) {
-                this._accounts = [result.address.toLowerCase()];
-                cleanupCallback(null, this._accounts);
-            }.bind(this))
-            .catch(error => cleanupCallback(error));
+	for (let pth in this._path) {
+
+        const address = await eth.getAddress_async(pth, askForOnDeviceConfirmation, chainCode)
+	addresses[path] = address.address;
+        addressToPathMap[address.address.toLowerCase()] = path;
+	}
+	callback(addresses);
     }
 
     /**
