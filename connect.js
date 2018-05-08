@@ -3,7 +3,7 @@
  *
  * GPLv3
  */
-var VERSION = 2;
+var TREZOR_CONNECT_VERSION = 4;
 
 if (!Array.isArray) {
     Array.isArray = function(arg) {
@@ -35,15 +35,9 @@ this.TrezorConnect = (function () {
 
     var DISABLE_LOGIN_BUTTONS = window.TREZOR_DISABLE_LOGIN_BUTTONS || false;
     var CHROME_URL = window.TREZOR_CHROME_URL || './chrome/wrapper.html';
-    var POPUP_URL = window.TREZOR_POPUP_URL || 'https://connect.trezor.io/' + VERSION + '/popup/popup.html';
-    var POPUP_PATH = window.TREZOR_POPUP_PATH || 'https://connect.trezor.io/' + VERSION;
     var POPUP_ORIGIN = window.TREZOR_POPUP_ORIGIN || 'https://connect.trezor.io';
-
-    var INSIGHT_URLS = window.TREZOR_INSIGHT_URLS || 
-        [
-            'https://btc-bitcore1.trezor.io/api/',
-            'https://btc-bitcore3.trezor.io/api/',
-        ];
+    var POPUP_PATH = window.TREZOR_POPUP_PATH || POPUP_ORIGIN + '/' + TREZOR_CONNECT_VERSION;
+    var POPUP_URL = window.TREZOR_POPUP_URL || POPUP_PATH + '/popup/popup.html?v=' + new Date().getTime();
 
     var POPUP_INIT_TIMEOUT = 15000;
 
@@ -106,6 +100,36 @@ this.TrezorConnect = (function () {
                 manager.bitcoreURLS = [ value ];
             }else if (value instanceof Array) {
                 manager.bitcoreURLS = value;
+            }
+        }
+
+        /**
+         * Set currency. Human readable coin name
+         * @param {string|Array<string>} value
+         */
+        this.setCurrency = function(value) {
+            if (typeof value === 'string') {
+                manager.currency = value;
+            }
+        }
+
+        /**
+         * Set currency units (mBTC, BTC)
+         * @param {string|Array<string>} value
+         */
+        this.setCurrencyUnits = function(value) {
+            if (typeof value === 'string') {
+                manager.currencyUnits = value;
+            }
+        }
+
+        /**
+         * Set coin info json url
+         * @param {string|Array<string>} value
+         */
+        this.setCoinInfoURL = function(value) {
+            if (typeof value === 'string') {
+                manager.coinInfoURL = value;
             }
         }
 
@@ -182,10 +206,9 @@ this.TrezorConnect = (function () {
 
         this.getAccountInfo = function (input, callback, requiredFirmware) {
             try {
-                var description = parseAccountInfoInput(input);
                 manager.sendWithChannel(_fwStrFix({
                     type: 'accountinfo',
-                    description: description
+                    description: input
                 }, requiredFirmware), callback);
             } catch(e) {
                 callback({success: false, error: e});
@@ -377,7 +400,7 @@ this.TrezorConnect = (function () {
                 type: 'signmsg',
                 path: path,
                 message: message,
-                coin: {coin_name: opt_coin},
+                coin: opt_coin,
             }, requiredFirmware), callback);
         };
 
@@ -521,6 +544,44 @@ this.TrezorConnect = (function () {
             }, requiredFirmware), callback);
         };
 
+        this.nemGetAddress = function (
+          address_n,
+          network,
+          callback,
+          requiredFirmware
+        ) {
+            if (requiredFirmware == null) {
+                requiredFirmware = '1.6.0'; // first firmware that supports NEM
+            }
+            if (typeof address_n === 'string') {
+                address_n = parseHDPath(address_n);
+            }
+            manager.sendWithChannel(_fwStrFix({
+                type: 'nemGetAddress',
+                address_n: address_n,
+                network: network,
+            }, requiredFirmware), callback);
+        }
+
+        this.nemSignTx = function (
+          address_n,
+          transaction,
+          callback,
+          requiredFirmware
+        ) {
+            if (requiredFirmware == null) {
+                requiredFirmware = '1.6.0'; // first firmware that supports NEM
+            }
+            if (typeof address_n === 'string') {
+                address_n = parseHDPath(address_n);
+            }
+            manager.sendWithChannel(_fwStrFix({
+                type: 'nemSignTx',
+                address_n: address_n,
+                transaction: transaction
+            }, requiredFirmware), callback);
+        }
+
         this.pushTransaction = function (
           rawTx,
           callback
@@ -532,35 +593,10 @@ this.TrezorConnect = (function () {
                 throw new TypeError('TrezorConnect: callback not found');
             }
 
-            var tryUrl = function(i) {
-                var insight_url = INSIGHT_URLS[i];
-                var xhr = new XMLHttpRequest();
-                var method = 'POST';
-                var url = insight_url + '/tx/send';
-                var data = {
-                    rawtx: rawTx
-                };
-
-                xhr.open(method, url, true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === XMLHttpRequest.DONE) {
-                        if (xhr.status === 200) {
-                            var txid = JSON.parse(xhr.responseText).txid;
-                            callback({success: true, txid: txid});
-                        } else {
-                            if (i === INSIGHT_URLS.length - 1) {
-                                callback({error: new Error(xhr.responseText)});
-                            } else {
-                                tryUrl(i + 1);
-                            }
-                        }
-                    }
-                };
-                xhr.send(JSON.stringify(data));
-            }
-
-            tryUrl(0);
+            manager.sendWithChannel({
+                type: 'pushtx',
+                rawTx: rawTx,
+            }, callback);
         }
 
         /**
@@ -680,44 +716,6 @@ this.TrezorConnect = (function () {
                 }
                 return n;
             });
-    }
-
-
-    function getIdFromPath(path) {
-        if (path.length !== 3) {
-            throw new Error();
-        }
-        if ((path[0] >>> 0) !== ((44 | HD_HARDENED) >>> 0)) {
-            throw new Error();
-        }
-        if ((path[1] >>> 0) !== ((0 | HD_HARDENED) >>> 0)) {
-            throw new Error();
-        }
-        return ((path[2] & ~HD_HARDENED) >>> 0);
-    }
-
-    // parses first argument from getAccountInfo
-    function parseAccountInfoInput(input) {
-        if (input == null) {
-            return null;
-        }
-
-        if (typeof input === 'string') {
-            if (input.substr(0, 4) === 'xpub') {
-                return input;
-            }
-            if (isNaN(input)) {
-                var parsedPath = parseHDPath(input);
-                return getIdFromPath(parsedPath);
-            } else {
-                return parseInt(input);
-            }
-        } else if (Array.isArray(input)) {
-            return getIdFromPath(input);
-        } else if (typeof input === 'number') {
-            return input;
-        }
-        throw new Error('Unknown input format.');
     }
 
     /*
@@ -843,7 +841,10 @@ this.TrezorConnect = (function () {
         };
 
         var receive = function (event) {
-            if (event.source === popup.window && event.origin === popup.origin) {
+            var org1 = event.origin.match(/^.+\:\/\/[^\‌​/]+/)[0];
+            var org2 = popup.origin.match(/^.+\:\/\/[^\‌​/]+/)[0];
+            //if (event.source === popup.window && event.origin === popup.origin) {
+            if (event.source === popup.window && org1 === org2) {
                 respond(event.data);
             }
         };
@@ -967,6 +968,9 @@ this.TrezorConnect = (function () {
 
         this.sendWithChannel = function (message, callback) {
             message.bitcoreURLS = this.bitcoreURLS || null;
+            message.currency = this.currency || null;
+            message.currencyUnits = this.currencyUnits || null;
+            message.coinInfoURL = this.coinInfoURL || null;
             message.accountDiscoveryLimit = this.accountDiscoveryLimit || null;
             message.accountDiscoveryGapLength = this.accountDiscoveryGapLength || null;
             message.accountDiscoveryBip44CoinType = this.accountDiscoveryBip44CoinType || null;

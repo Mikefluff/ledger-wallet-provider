@@ -1,5 +1,6 @@
 import TrezorConnect from '../connect';
 import EthereumTx from 'ethereumjs-tx';
+import hdKey from 'ethereumjs-wallet/hdkey';
 import u2f from '../u2f-api';
 import {timeout} from 'promise-timeout';
 const stripHexPrefix = require('strip-hex-prefix');
@@ -39,7 +40,7 @@ const NOT_SUPPORTED_ERROR_MSG =
  *  https://github.com/MetaMask/metamask-plugin/blob/master/app/scripts/keyrings/hd.js
  *
  */
-var path = "m/44'/60'/0'";
+var path = "m/44'/60'/0'/0";
 
 function stripAndPad (str) {
     if(str !== undefined) {
@@ -81,8 +82,9 @@ class TrezorWallet {
      * @param {failableCallback} callback
      * @param askForOnDeviceConfirmation
      */
-    async getAccounts(callback, askForOnDeviceConfirmation = true) {
+    async getAccounts(callback, askForOnDeviceConfirmation = false) {
 	console.log('get accounts called')
+        let addresses = [];
         if (this._accounts !== null) {
             callback(null, this._accounts);
             return;
@@ -91,11 +93,16 @@ class TrezorWallet {
 	let cleanupCallback = (error, data) => {
             callback(error, data);
         };
-        TrezorConnect.TrezorConnect.ethereumGetAddress(this._path, function (response) {
+        TrezorConnect.TrezorConnect.getXPubKey(this._path, function (response) {
         if (response.success) { // success
-            this._accounts = ['0x' + response.address];
-            cleanupCallback(null, ['0x' + response.address]);
-            console.log('Address: ', response.address);
+	    console.log('XPUB:', response.xpubkey); // serialized XPUB
+	    const hdWallet = hdKey.fromExtendedKey(response.xpubkey)
+	    for (var i = 0; i < 5; i++) {
+	        const address = hdWallet.deriveChild(i).getWallet().getAddressString()
+                addresses.push(address)
+	    }
+            cleanupCallback(null, addresses);
+            console.log('Addresses: ', addresses);
         } else {
             cleanupCallback(response.error)
             console.error('Error:', response.error); // error message

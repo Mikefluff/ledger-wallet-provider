@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Neufund/ledger-wallet-provider.git"
+    "url": "git+https://github.com/mikefluff/ledger-wallet-provider.git"
   },
-  "author": "Neufund",
+  "author": "MikeFluff",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Neufund/ledger-wallet-provider/issues"
+    "url": "https://github.com/mikefluff/ledger-wallet-provider/issues"
   },
-  "homepage": "https://github.com/Neufund/ledger-wallet-provider#readme",
+  "homepage": "https://github.com/mikefluff/ledger-wallet-provider#readme",
   "devDependencies": {
     "babel-cli": "^6.23.0",
     "babel-core": "^6.22.1",
@@ -28,9 +28,10 @@
     "babel-preset-es2017": "^6.22.0"
   },
   "dependencies": {
+    "ethereumjs-wallet": "0.6.0",
     "babel-runtime": "^6.23.0",
     "@ledgerhq/hw-app-eth": "^4.7.3",
-    "@ledgerhq/hw-transport": "^4.7.3",
+    "@ledgerhq/hw-transport-u2f": "^4.7.3",
     "promise-timeout": "^1.1.1",
     "strip-hex-prefix": "^1.0.0",
     "web3-provider-engine": "^14.0.3"
