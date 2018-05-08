@@ -1,11 +1,9 @@
 import TrezorConnect from '../connect';
 import EthereumTx from 'ethereumjs-tx';
 import hdKey from 'ethereumjs-wallet/hdkey';
-import u2f from 'u2f-api';
 import {timeout} from 'promise-timeout';
 const stripHexPrefix = require('strip-hex-prefix');
 const BigNumber = require('bignumber.js');
-if (window.u2f === undefined) window.u2f = u2f;
 
 const NOT_SUPPORTED_ERROR_MSG =
     "TrezorWallet uses U2F which is not supported by your browser. " +
