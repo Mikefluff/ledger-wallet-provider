@@ -87,7 +87,6 @@ class TrezorWallet {
             callback(null, this._accounts);
             return;
         }
-        const chainCode = false; // Include the chain code
 	let cleanupCallback = (error, data) => {
             callback(error, data);
         };

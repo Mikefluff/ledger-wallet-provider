@@ -75,19 +75,7 @@ class LedgerWallet {
      */
     static async isSupported() {
         return new Promise((resolve, reject) => {
-            if (window.u2f && !window.u2f.getApiVersion) {
-                // u2f object is found (Firefox with extension)
                 resolve(true);
-            } else {
-                // u2f object was not found. Using Google polyfill
-                const intervalId = setTimeout(() => {
-                    resolve(false);
-                }, 3000);
-                u2f.getApiVersion((version) => {
-                    clearTimeout(intervalId);
-                    resolve(true);
-                });
-            }
         });
     };
 
