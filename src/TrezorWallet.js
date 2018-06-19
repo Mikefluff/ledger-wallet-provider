@@ -38,7 +38,7 @@ const NOT_SUPPORTED_ERROR_MSG =
  *  https://github.com/MetaMask/metamask-plugin/blob/master/app/scripts/keyrings/hd.js
  *
  */
-var path = "m/44'/60'/0'/0";
+var path = "m/44'/60'/0'";
 
 function stripAndPad (str) {
     if(str !== undefined) {
@@ -90,10 +90,12 @@ class TrezorWallet {
 	let cleanupCallback = (error, data) => {
             callback(error, data);
         };
-        TrezorConnect.TrezorConnect.getXPubKey(this._path, function (response) {
+	TrezorConnect.TrezorConnect.getXPubKey(path, function (response) {
         if (response.success) { // success
-	    console.log('XPUB:', response.xpubkey); // serialized XPUB
-	    const hdWallet = hdKey.fromExtendedKey(response.xpubkey)
+	const hdWallet = hdKey.fromExtendedKey(response.xpubkey)	
+	const addr = hdWallet.getWallet().getAddressString()	
+	addresses.push(addr)
+	  
 	    for (var i = 0; i < 5; i++) {
 	        const address = hdWallet.deriveChild(i).getWallet().getAddressString()
                 addresses.push(address)
@@ -104,7 +106,7 @@ class TrezorWallet {
             cleanupCallback(response.error)
             console.error('Error:', response.error); // error message
         }
-        }.bind(this));	
+        }.bind(this))	
     }
 
     /**

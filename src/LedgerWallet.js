@@ -128,8 +128,10 @@ class LedgerWallet {
             //this._closeLedgerConnection(eth);
             callback(error, data);
         };
-	const transport = await getTransport();
-        const eth = new AppEth(transport);
+	const transport = await getTransport()
+        const eth = new AppEth(transport)
+	const addr = await eth.getAddress("44'/60'/0'/0/0", false, false)
+	addresses.push(addr.address)    
         for (var i = 0; i < 5; i++) {
             const path = pathComponents.basePath + (pathComponents.index + i).toString();
             console.log(path)

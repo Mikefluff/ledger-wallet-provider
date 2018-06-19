@@ -28,13 +28,11 @@
     "babel-preset-es2017": "^6.22.0"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "^4.7.3",
-    "@ledgerhq/hw-transport-u2f": "^4.7.3",
+    "@ledgerhq/hw-app-eth": "^4.14.0",
+    "@ledgerhq/hw-transport-u2f": "^4.13.0",
     "babel-runtime": "^6.23.0",
-    "ethereumjs-wallet": "0.6.0",
-    "npm": "^6.1.0",
+    "ethereumjs-wallet": "github:mikefluff/ethereumjs-wallet",
     "promise-timeout": "^1.1.1",
-    "strip-hex-prefix": "^1.0.0",
-    "web3-provider-engine": "^14.0.3"
+    "strip-hex-prefix": "^1.0.0"
   }
 }
