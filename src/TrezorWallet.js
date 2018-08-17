@@ -4,6 +4,7 @@ import hdKey from 'ethereumjs-wallet/hdkey';
 import {timeout} from 'promise-timeout';
 const stripHexPrefix = require('strip-hex-prefix');
 const BigNumber = require('bignumber.js');
+const addressToPathMap = {};
 
 const NOT_SUPPORTED_ERROR_MSG =
     "TrezorWallet uses U2F which is not supported by your browser. " +
@@ -95,10 +96,12 @@ class TrezorWallet {
 	const hdWallet = hdKey.fromExtendedKey(response.xpubkey)	
 	const addr = hdWallet.getWallet().getAddressString()	
 	addresses.push(addr)
+	addressToPathMap[addr] = path;
 	  
 	    for (var i = 0; i < 5; i++) {
 	        const address = hdWallet.deriveChild(i).getWallet().getAddressString()
                 addresses.push(address)
+		addressToPathMap[address] = `${path}/${i}`
 	    }
             cleanupCallback(null, addresses);
             console.log('Addresses: ', addresses);
@@ -135,7 +138,7 @@ class TrezorWallet {
         console.log(stripAndPad(txData.value));
         console.log(stripAndPad(txData.to));
          TrezorConnect.TrezorConnect.ethereumSignTx(
-            this._path,
+            addressToPathMap[txData.from.toLowerCase()],
             stripAndPad(txData.nonce),
             stripAndPad(txData.gasPrice),
             stripAndPad(txData.gas),

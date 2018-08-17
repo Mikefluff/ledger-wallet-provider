@@ -131,6 +131,7 @@ class LedgerWallet {
 	const transport = await getTransport()
         const eth = new AppEth(transport)
 	const addr = await eth.getAddress("44'/60'/0'/0/0", false, false)
+	addressToPathMap[addr.address.toLowerCase()] = "44'/60'/0'/0/0";
 	addresses.push(addr.address)    
         for (var i = 0; i < 5; i++) {
             const path = pathComponents.basePath + (pathComponents.index + i).toString();
@@ -142,7 +143,7 @@ class LedgerWallet {
 	transport.close()
 	callback(null, addresses);
     }
-
+	
     /**
      * Signs txData in a format that ethereumjs-tx accepts
      * @param {object} txData - transaction to sign
@@ -177,8 +178,13 @@ class LedgerWallet {
             // Pass to _ledger for signing
 	    const transport = await getTransport();
             const eth = new AppEth(transport);
-            eth.signTransaction(this._path, hex)
+	    console.log('sign tx')
+	    console.log(txData)
+	    console.log(addressToPathMap)
+	    console.log(addressToPathMap[txData.from.toLowerCase()])
+            eth.signTransaction(addressToPathMap[txData.from.toLowerCase()], hex)
                 .then(result => {
+		    console.log(result)
                     // Store signature in transaction
                     tx.v = new Buffer(result.v, "hex");
                     tx.r = new Buffer(result.r, "hex");
