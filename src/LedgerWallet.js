@@ -139,6 +139,7 @@ class LedgerWallet {
             const address = await eth.getAddress(path, false, false)
             addresses.push(address.address);
             addressToPathMap[address.address.toLowerCase()] = path;
+	    console.log(addressToPathMap)
         }
 	transport.close()
 	callback(null, addresses);
@@ -150,6 +151,8 @@ class LedgerWallet {
      * @param {failableCallback} callback - callback
      */
     async signTransaction(txData, callback) {
+	const path = addressToPathMap[txData.from.toLowerCase()];
+        if (!path) throw new Error("address unknown '" + txData.from + "'");  
         if (!this.isU2FSupported) {
             callback(new Error(NOT_SUPPORTED_ERROR_MSG));
             return;
@@ -159,6 +162,7 @@ class LedgerWallet {
 
         // Fetch the chain id
         this._web3.version.getNetwork(async function (error, chain_id) {
+	    
             if (error) callback(error);
 
             // Force chain_id to int
@@ -178,11 +182,7 @@ class LedgerWallet {
             // Pass to _ledger for signing
 	    const transport = await getTransport();
             const eth = new AppEth(transport);
-	    console.log('sign tx')
-	    console.log(txData)
-	    console.log(addressToPathMap)
-	    console.log(addressToPathMap[txData.from.toLowerCase()])
-            eth.signTransaction(addressToPathMap[txData.from.toLowerCase()], hex)
+            eth.signTransaction(path, hex)
                 .then(result => {
 		    console.log(result)
                     // Store signature in transaction

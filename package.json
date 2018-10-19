@@ -1,7 +1,7 @@
 {
   "name": "ledger-wallet-provider",
-  "version": "1.15.6",
-  "description": "Ledger Nano S wallet provider for the Web3 ProviderEngine",
+  "version": "1.15.7",
+  "description": "Ledger Nano S / Trezor wallet provider for the Web3 ProviderEngine",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
